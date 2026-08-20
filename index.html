@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recursos</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="header">
+    <h1>Recursos</h1>
+    <div class="header-controls">
+      <!-- Buscador al lado del botón agregar -->
+      <input type="text" id="input-buscador" placeholder="Buscar planilla..." class="search-input">
+      <button id="btn-toggle-form" class="btn btn-primary">+ Agregar Planilla</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Formulario para agregar planilla -->
+    <section id="form-container" class="form-card hidden">
+      <h2>Nueva Planilla</h2>
+      <form id="planilla-form">
+        <div class="form-group">
+          <label for="titulo">Título de la planilla</label>
+          <input type="text" id="titulo" placeholder="Ej: Inventario de Laptops" required>
+        </div>
+
+        <div class="form-group">
+          <label for="categoria">Categoría / Sección</label>
+          <select id="categoria" required>
+            <option value="" disabled selected>Selecciona una categoría...</option>
+            <option value="hardware">Hardware</option>
+            <option value="software">Software</option>
+            <option value="redes">Redes</option>
+            <option value="mantenimiento">Mantenimiento</option>
+            <option value="lider">Líder</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="descripcion">¿Para qué sirve? (Descripción)</label>
+          <textarea id="descripcion" rows="3" placeholder="Ej: Registro y estado de equipos." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="enlace">Enlace a la planilla (URL)</label>
+          <input type="url" id="enlace" placeholder="https://docs.google.com/..." required>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" id="btn-cancelar" class="btn btn-secondary">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Contenedores por Categoría -->
+    <div class="sections-wrapper">
+      
+      <section class="category-block" data-category="hardware">
+        <h2 class="category-title">Hardware</h2>
+        <div class="grid" id="grid-hardware"></div>
+      </section>
+
+      <section class="category-block" data-category="software">
+        <h2 class="category-title">Software</h2>
+        <div class="grid" id="grid-software"></div>
+      </section>
+
+      <section class="category-block" data-category="redes">
+        <h2 class="category-title">Redes</h2>
+        <div class="grid" id="grid-redes"></div>
+      </section>
+
+      <section class="category-block" data-category="mantenimiento">
+        <h2 class="category-title">Mantenimiento</h2>
+        <div class="grid" id="grid-mantenimiento"></div>
+      </section>
+
+      <section class="category-block" data-category="lider">
+        <h2 class="category-title">Líder</h2>
+        <div class="grid" id="grid-lider"></div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="scrip.js"></script>
+</body>
+</html>
