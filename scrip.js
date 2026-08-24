@@ -1,4 +1,6 @@
-document.addEventListener('DOMContentLoaded', async () => {
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby7W4rsJoG9yUMJbGlu2ZJ7G4wTnskdIJxPTv1i5jHFqb_czUZsvMsa2hwhLGJYAB_AXA/exec";
+
+document.addEventListener('DOMContentLoaded', () => {
   const btnToggleForm = document.getElementById('btn-toggle-form');
   const btnCancelar = document.getElementById('btn-cancelar');
   const formContainer = document.getElementById('form-container');
@@ -8,28 +10,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   const categorias = ['hardware', 'software', 'redes', 'mantenimiento', 'lider'];
   let planillas = [];
 
-  // Cargar planillas desde el JSON forzando la actualización sin caché
-  const cargarPlanillasDesdeJSON = async () => {
+  // Cargar planillas desde Google Drive
+  const cargarPlanillas = async () => {
     try {
-      const respuesta = await fetch('planillas.json?v=' + Date.now());
-      planillas = await respuesta.json();
+      const res = await fetch(APPS_SCRIPT_URL);
+      planillas = await res.json();
     } catch (error) {
-      console.error('Error al cargar planillas.json:', error);
+      console.error('Error al conectar con Google Drive:', error);
       planillas = [];
     }
     renderTarjetas();
   };
 
-  // Descarga automática del JSON actualizado
-  const ofrecerDescargaJSON = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(planillas, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "planillas.json");
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-    alert('Se descargó el archivo "planillas.json" actualizado. ¡Súbelo a GitHub para publicar los cambios!');
+  // Guardar cambios en Google Drive
+  const guardarEnDrive = async () => {
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(planillas)
+      });
+      // Esperar 1 segundo a que Google procese antes de recargar
+      setTimeout(cargarPlanillas, 1000);
+    } catch (error) {
+      alert('Error al guardar datos en Drive');
+    }
   };
 
   const abrirFormulario = () => formContainer.classList.remove('hidden');
@@ -41,7 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   btnToggleForm.addEventListener('click', abrirFormulario);
   btnCancelar.addEventListener('click', cerrarFormulario);
 
-  // Renderizar las tarjetas por categoría
+  // Renderizar tarjetas por categoría
   const renderTarjetas = (filtro = '') => {
     categorias.forEach(cat => {
       const grid = document.getElementById(`grid-${cat}`);
@@ -100,12 +108,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     planillas.push(nuevaPlanilla);
-    renderTarjetas(inputBuscador.value);
     cerrarFormulario();
-    ofrecerDescargaJSON();
+    guardarEnDrive();
   });
 
-  // Eliminar planilla con clave
+  // Eliminar con contraseña 'lider'
   window.eliminarPlanilla = (id) => {
     const codigoIngresado = prompt('Para eliminar esta planilla, ingresa el código de autorización:');
 
@@ -113,9 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (codigoIngresado.trim() === 'lider') {
       planillas = planillas.filter(p => p.id !== id);
-      renderTarjetas(inputBuscador.value);
-      alert('Planilla eliminada.');
-      ofrecerDescargaJSON();
+      guardarEnDrive();
     } else {
       alert('Código incorrecto. No tienes permiso para eliminar esta planilla.');
     }
@@ -125,6 +130,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderTarjetas(e.target.value);
   });
 
-  // Inicio de carga
-  cargarPlanillasDesdeJSON();
+  cargarPlanillas();
 });
