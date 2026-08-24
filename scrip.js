@@ -8,10 +8,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const categorias = ['hardware', 'software', 'redes', 'mantenimiento', 'lider'];
   let planillas = [];
 
-  // Cargar planillas desde el archivo JSON de GitHub
+  // Cargar planillas desde el JSON forzando la actualización sin caché
   const cargarPlanillasDesdeJSON = async () => {
     try {
-      const respuesta = await fetch('planillas.json');
+      const respuesta = await fetch('planillas.json?v=' + Date.now());
       planillas = await respuesta.json();
     } catch (error) {
       console.error('Error al cargar planillas.json:', error);
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderTarjetas();
   };
 
-  // Función para ofrecer la descarga del JSON actualizado al hacer cambios
+  // Descarga automática del JSON actualizado
   const ofrecerDescargaJSON = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(planillas, null, 2));
     const downloadAnchor = document.createElement('a');
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
-    alert('Se ha descargado un archivo "planillas.json" actualizado. ¡Súbelo a tu repositorio de GitHub para que todos vean los cambios!');
+    alert('Se descargó el archivo "planillas.json" actualizado. ¡Súbelo a GitHub para publicar los cambios!');
   };
 
   const abrirFormulario = () => formContainer.classList.remove('hidden');
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   btnToggleForm.addEventListener('click', abrirFormulario);
   btnCancelar.addEventListener('click', cerrarFormulario);
 
-  // Renderizar las tarjetas
+  // Renderizar las tarjetas por categoría
   const renderTarjetas = (filtro = '') => {
     categorias.forEach(cat => {
       const grid = document.getElementById(`grid-${cat}`);
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (codigoIngresado.trim() === 'lider') {
       planillas = planillas.filter(p => p.id !== id);
       renderTarjetas(inputBuscador.value);
-      alert('Planilla eliminada de la pantalla.');
+      alert('Planilla eliminada.');
       ofrecerDescargaJSON();
     } else {
       alert('Código incorrecto. No tienes permiso para eliminar esta planilla.');
@@ -125,5 +125,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderTarjetas(e.target.value);
   });
 
+  // Inicio de carga
   cargarPlanillasDesdeJSON();
 });
