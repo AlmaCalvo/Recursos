@@ -6,30 +6,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   const inputBuscador = document.getElementById('input-buscador');
 
   const categorias = ['hardware', 'software', 'redes', 'mantenimiento', 'lider'];
-
   let planillas = [];
 
-  // 1. Cargar planillas desde el archivo planillas.json
+  // Cargar planillas desde el archivo JSON de GitHub
   const cargarPlanillasDesdeJSON = async () => {
     try {
-      // Intenta cargar las planillas guardadas localmente por el usuario primero
-      const locales = JSON.parse(localStorage.getItem('planillas_v2'));
-      if (locales && locales.length > 0) {
-        planillas = locales;
-      } else {
-        // Si no hay cambios locales, lee el archivo planillas.json de GitHub
-        const respuesta = await fetch('planillas.json');
-        planillas = await respuesta.json();
-        localStorage.setItem('planillas_v2', JSON.stringify(planillas));
-      }
+      const respuesta = await fetch('planillas.json');
+      planillas = await respuesta.json();
     } catch (error) {
       console.error('Error al cargar planillas.json:', error);
-      planillas = JSON.parse(localStorage.getItem('planillas_v2')) || [];
+      planillas = [];
     }
     renderTarjetas();
   };
 
-  // Abrir/Cerrar formulario
+  // Función para ofrecer la descarga del JSON actualizado al hacer cambios
+  const ofrecerDescargaJSON = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(planillas, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", "planillas.json");
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    alert('Se ha descargado un archivo "planillas.json" actualizado. ¡Súbelo a tu repositorio de GitHub para que todos vean los cambios!');
+  };
+
   const abrirFormulario = () => formContainer.classList.remove('hidden');
   const cerrarFormulario = () => {
     formContainer.classList.add('hidden');
@@ -39,7 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   btnToggleForm.addEventListener('click', abrirFormulario);
   btnCancelar.addEventListener('click', cerrarFormulario);
 
-  // Renderizar tarjetas en sus contenedores
+  // Renderizar las tarjetas
   const renderTarjetas = (filtro = '') => {
     categorias.forEach(cat => {
       const grid = document.getElementById(`grid-${cat}`);
@@ -98,10 +100,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     planillas.push(nuevaPlanilla);
-    localStorage.setItem('planillas_v2', JSON.stringify(planillas));
-
     renderTarjetas(inputBuscador.value);
     cerrarFormulario();
+    ofrecerDescargaJSON();
   });
 
   // Eliminar planilla con clave
@@ -112,9 +113,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (codigoIngresado.trim() === 'lider') {
       planillas = planillas.filter(p => p.id !== id);
-      localStorage.setItem('planillas_v2', JSON.stringify(planillas));
       renderTarjetas(inputBuscador.value);
-      alert('Planilla eliminada con éxito.');
+      alert('Planilla eliminada de la pantalla.');
+      ofrecerDescargaJSON();
     } else {
       alert('Código incorrecto. No tienes permiso para eliminar esta planilla.');
     }
@@ -124,6 +125,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderTarjetas(e.target.value);
   });
 
-  // Cargar datos al iniciar
   cargarPlanillasDesdeJSON();
 });
