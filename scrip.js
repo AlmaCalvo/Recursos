@@ -1,5 +1,7 @@
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby7W4rsJoG9yUMJbGlu2ZJ7G4wTnskdIJxPTv1i5jHFqb_czUZsvMsa2hwhLGJYAB_AXA/exec";
 
+
+
 document.addEventListener('DOMContentLoaded', () => {
   const btnToggleForm = document.getElementById('btn-toggle-form');
   const btnCancelar = document.getElementById('btn-cancelar');
@@ -22,22 +24,16 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTarjetas();
   };
 
-  // Guardar cambios en Google Drive
-  const guardarEnDrive = async () => {
-    try {
-      await fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(planillas)
-      });
-      // Esperar 1 segundo a que Google procese antes de recargar
-      setTimeout(cargarPlanillas, 1000);
-    } catch (error) {
-      alert('Error al guardar datos en Drive');
-    }
+  // Guardar en Google Drive sin bloquear la interfaz
+  const guardarEnDrive = (datosAEnviar) => {
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(datosAEnviar)
+    }).catch(err => console.error("Error enviando a Drive:", err));
   };
 
   const abrirFormulario = () => formContainer.classList.remove('hidden');
@@ -107,9 +103,13 @@ document.addEventListener('DOMContentLoaded', () => {
       enlace: document.getElementById('enlace').value.trim()
     };
 
+    // 1. Agregar a la lista local para verla en pantalla de inmediato
     planillas.push(nuevaPlanilla);
+    renderTarjetas(inputBuscador.value);
     cerrarFormulario();
-    guardarEnDrive();
+
+    // 2. Guardar en Google Drive en segundo plano
+    guardarEnDrive(planillas);
   });
 
   // Eliminar con contraseña 'lider'
@@ -120,7 +120,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (codigoIngresado.trim() === 'lider') {
       planillas = planillas.filter(p => p.id !== id);
-      guardarEnDrive();
+      renderTarjetas(inputBuscador.value);
+      guardarEnDrive(planillas);
     } else {
       alert('Código incorrecto. No tienes permiso para eliminar esta planilla.');
     }
