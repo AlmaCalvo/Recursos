@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const btnToggleForm = document.getElementById('btn-toggle-form');
   const btnCancelar = document.getElementById('btn-cancelar');
   const formContainer = document.getElementById('form-container');
@@ -7,8 +7,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const categorias = ['hardware', 'software', 'redes', 'mantenimiento', 'lider'];
 
-  // Cargar planillas desde localStorage
-  let planillas = JSON.parse(localStorage.getItem('planillas_v2')) || [];
+  let planillas = [];
+
+  // 1. Cargar planillas desde el archivo planillas.json
+  const cargarPlanillasDesdeJSON = async () => {
+    try {
+      // Intenta cargar las planillas guardadas localmente por el usuario primero
+      const locales = JSON.parse(localStorage.getItem('planillas_v2'));
+      if (locales && locales.length > 0) {
+        planillas = locales;
+      } else {
+        // Si no hay cambios locales, lee el archivo planillas.json de GitHub
+        const respuesta = await fetch('planillas.json');
+        planillas = await respuesta.json();
+        localStorage.setItem('planillas_v2', JSON.stringify(planillas));
+      }
+    } catch (error) {
+      console.error('Error al cargar planillas.json:', error);
+      planillas = JSON.parse(localStorage.getItem('planillas_v2')) || [];
+    }
+    renderTarjetas();
+  };
 
   // Abrir/Cerrar formulario
   const abrirFormulario = () => formContainer.classList.remove('hidden');
@@ -20,21 +39,17 @@ document.addEventListener('DOMContentLoaded', () => {
   btnToggleForm.addEventListener('click', abrirFormulario);
   btnCancelar.addEventListener('click', cerrarFormulario);
 
-  // Renderizar planillas en sus contenedores
+  // Renderizar tarjetas en sus contenedores
   const renderTarjetas = (filtro = '') => {
-    // Limpiar todas las grillas
     categorias.forEach(cat => {
       const grid = document.getElementById(`grid-${cat}`);
       if (grid) grid.innerHTML = '';
     });
 
     const textoFiltro = filtro.toLowerCase().trim();
-
-    // Contadores para ver si una sección queda vacía
     const conteo = { hardware: 0, software: 0, redes: 0, mantenimiento: 0, lider: 0 };
 
     planillas.forEach((planilla) => {
-      // Filtrar por título o descripción
       const coincide = planilla.titulo.toLowerCase().includes(textoFiltro) || 
                        planilla.descripcion.toLowerCase().includes(textoFiltro);
 
@@ -62,7 +77,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Mensaje si no hay tarjetas en una categoría
     categorias.forEach(cat => {
       const grid = document.getElementById(`grid-${cat}`);
       if (grid && conteo[cat] === 0) {
@@ -76,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
 
     const nuevaPlanilla = {
-      id: Date.now().toString(), // ID único para identificarla al eliminar
+      id: Date.now().toString(),
       titulo: document.getElementById('titulo').value.trim(),
       categoria: document.getElementById('categoria').value,
       descripcion: document.getElementById('descripcion').value.trim(),
@@ -90,11 +104,11 @@ document.addEventListener('DOMContentLoaded', () => {
     cerrarFormulario();
   });
 
-  // Eliminar planilla CON CÓDIGO DE SEGURIDAD
+  // Eliminar planilla con clave
   window.eliminarPlanilla = (id) => {
     const codigoIngresado = prompt('Para eliminar esta planilla, ingresa el código de autorización:');
 
-    if (codigoIngresado === null) return; // Si cancela la ventana emergente
+    if (codigoIngresado === null) return;
 
     if (codigoIngresado.trim() === 'lider') {
       planillas = planillas.filter(p => p.id !== id);
@@ -106,11 +120,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Evento del buscador
   inputBuscador.addEventListener('input', (e) => {
     renderTarjetas(e.target.value);
   });
 
-  // Carga inicial
-  renderTarjetas();
+  // Cargar datos al iniciar
+  cargarPlanillasDesdeJSON();
 });
