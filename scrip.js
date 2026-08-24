@@ -1,7 +1,6 @@
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby7W4rsJoG9yUMJbGlu2ZJ7G4wTnskdIJxPTv1i5jHFqb_czUZsvMsa2hwhLGJYAB_AXA/exec";
 
 
-
 document.addEventListener('DOMContentLoaded', () => {
   const btnToggleForm = document.getElementById('btn-toggle-form');
   const btnCancelar = document.getElementById('btn-cancelar');
@@ -12,10 +11,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const categorias = ['hardware', 'software', 'redes', 'mantenimiento', 'lider'];
   let planillas = [];
 
-  // Cargar planillas desde Google Drive
+  // 1. Cargar planillas (Anti-Caché activado)
   const cargarPlanillas = async () => {
     try {
-      const res = await fetch(APPS_SCRIPT_URL);
+      // El parámetro ?v= rompe la caché y trae los cambios reales de otros usuarios
+      const res = await fetch(APPS_SCRIPT_URL + '?v=' + Date.now());
       planillas = await res.json();
     } catch (error) {
       console.error('Error al conectar con Google Drive:', error);
@@ -24,16 +24,23 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTarjetas();
   };
 
-  // Guardar en Google Drive sin bloquear la interfaz
-  const guardarEnDrive = (datosAEnviar) => {
-    fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8',
-      },
-      body: JSON.stringify(datosAEnviar)
-    }).catch(err => console.error("Error enviando a Drive:", err));
+  // 2. Guardar planillas en Google Drive
+  const guardarEnDrive = async (datosAEnviar) => {
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'text/plain'
+        },
+        body: JSON.stringify(datosAEnviar)
+      });
+      
+      // Esperamos 1.5 segundos para que Google guarde el archivo y recargamos la lista
+      setTimeout(cargarPlanillas, 1500);
+    } catch (err) {
+      console.error("Error enviando a Drive:", err);
+    }
   };
 
   const abrirFormulario = () => formContainer.classList.remove('hidden');
@@ -91,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  // Guardar nueva planilla
+  // Agregar una planilla
   planillaForm.addEventListener('submit', (e) => {
     e.preventDefault();
 
@@ -103,16 +110,15 @@ document.addEventListener('DOMContentLoaded', () => {
       enlace: document.getElementById('enlace').value.trim()
     };
 
-    // 1. Agregar a la lista local para verla en pantalla de inmediato
     planillas.push(nuevaPlanilla);
     renderTarjetas(inputBuscador.value);
     cerrarFormulario();
 
-    // 2. Guardar en Google Drive en segundo plano
+    // Guardar en la nube
     guardarEnDrive(planillas);
   });
 
-  // Eliminar con contraseña 'lider'
+  // Eliminar una planilla
   window.eliminarPlanilla = (id) => {
     const codigoIngresado = prompt('Para eliminar esta planilla, ingresa el código de autorización:');
 
@@ -131,5 +137,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTarjetas(e.target.value);
   });
 
+  // Cargar datos
   cargarPlanillas();
 });
